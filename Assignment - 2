@@ -1,0 +1,121 @@
+import random
+import sqlite3
+from datetime import datetime
+
+# Predefined questions and answers
+quiz_data = [
+    {"question": "What is the keyword to define a function in Python?", "answer": "def"},
+    {"question": "Which data type is used to store text in Python?", "answer": "str"},
+    {"question": "What is the output of `len([1, 2, 3])`?", "answer": "3"},
+    {"question": "Which module is used to generate random numbers in Python?", "answer": "random"},
+    {"question": "What is the correct file extension for Python files?", "answer": ".py"},
+    {"question": "How do you start a comment in Python?", "answer": "#"},
+    {"question": "Which function is used to get input from the user?", "answer": "input"},
+    {"question": "What does `append` do in a list?", "answer": "Adds an element to the end of the list"},
+    {"question": "What is the output of `3 ** 2`?", "answer": "9"},
+    {"question": "What keyword is used to import a module in Python?", "answer": "import"}
+]
+
+# SQLite Database Setup
+DB_FILE = "quiz_app.db"
+
+def setup_database():
+    """Initialize the database and create tables if they don't exist."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    # Create tables
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            score INTEGER NOT NULL,
+            total_questions INTEGER NOT NULL,
+            date_taken TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            result_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            user_answer TEXT NOT NULL,
+            correct_answer TEXT NOT NULL,
+            FOREIGN KEY (result_id) REFERENCES quiz_results (id)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def save_results(username, score, total_questions, user_answers):
+    """Save the quiz results and answers to the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    # Insert into quiz_results
+    date_taken = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute("""
+        INSERT INTO quiz_results (username, score, total_questions, date_taken)
+        VALUES (?, ?, ?, ?)
+    """, (username, score, total_questions, date_taken))
+    result_id = cursor.lastrowid
+
+    # Insert into quiz_answers
+    for answer in user_answers:
+        cursor.execute("""
+            INSERT INTO quiz_answers (result_id, question, user_answer, correct_answer)
+            VALUES (?, ?, ?, ?)
+        """, (result_id, answer["question"], answer["your_answer"], answer["correct_answer"]))
+
+    conn.commit()
+    conn.close()
+
+def view_results():
+    """Display past quiz results from the database."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM quiz_results")
+    results = cursor.fetchall()
+
+    print("\n--- Past Quiz Results ---")
+    for result in results:
+        print(f"ID: {result[0]}, User: {result[1]}, Score: {result[2]}/{result[3]}, Date: {result[4]}")
+    conn.close()
+
+# Quiz function
+def run_quiz():
+    print("\n--- Welcome to the Python Quiz! ---\n")
+    username = input("Enter your username: ").strip()
+    score = 0
+    user_answers = []
+
+    random.shuffle(quiz_data)
+
+    for i, qa in enumerate(quiz_data):
+        print(f"Q{i + 1}: {qa['question']}")
+        user_answer = input("Your Answer: ").strip()
+        user_answers.append({"question": qa["question"], "your_answer": user_answer, "correct_answer": qa["answer"]})
+        
+        if user_answer.lower() == qa["answer"].lower():
+            print("Correct!\n")
+            score += 1
+        else:
+            print(f"Wrong! The correct answer was: {qa['answer']}\n")
+
+    print("\n--- Quiz Completed! ---")
+    print(f"Your score: {score}/{len(quiz_data)}\n")
+
+    # Save results to the database
+    save_results(username, score, len(quiz_data), user_answers)
+    print(f"Your results have been saved to the database!")
+
+    # Optionally show past results
+    view_past = input("Do you want to view past results? (yes/no): ").strip().lower()
+    if view_past == "yes":
+        view_results()
+
+# Main
+if __name__ == "__main__":
+    setup_database()
+    run_quiz()
