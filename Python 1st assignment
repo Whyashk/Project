@@ -1,0 +1,48 @@
+import random
+
+# Predefined questions and answers
+quiz_data = [
+    {"question": "What is the keyword to define a function in Python?", "answer": "def"},
+    {"question": "Which data type is used to store text in Python?", "answer": "str"},
+    {"question": "What is the output of `len([1, 2, 3])`?", "answer": "3"},
+    {"question": "Which module is used to generate random numbers in Python?", "answer": "random"},
+    {"question": "What is the correct file extension for Python files?", "answer": ".py"},
+    {"question": "How do you start a comment in Python?", "answer": "#"},
+    {"question": "Which function is used to get input from the user?", "answer": "input"},
+    {"question": "What does `append` do in a list?", "answer": "Adds an element to the end of the list"},
+    {"question": "What is the output of `3 ** 2`?", "answer": "9"},
+    {"question": "What keyword is used to import a module in Python?", "answer": "import"}
+]
+
+# Shuffle questions for randomness
+random.shuffle(quiz_data)
+
+# Quiz function
+def run_quiz():
+    print("\n--- Welcome to the Python Quiz! ---\n")
+    score = 0
+    user_answers = []
+
+    for i, qa in enumerate(quiz_data):
+        print(f"Q{i + 1}: {qa['question']}")
+        user_answer = input("Your Answer: ").strip()
+        user_answers.append({"question": qa["question"], "your_answer": user_answer, "correct_answer": qa["answer"]})
+        
+        if user_answer.lower() == qa["answer"].lower():
+            print("Correct!\n")
+            score += 1
+        else:
+            print(f"Wrong! The correct answer was: {qa['answer']}\n")
+
+    print("\n--- Quiz Completed! ---")
+    print(f"Your score: {score}/{len(quiz_data)}\n")
+
+    print("Your Answers:")
+    for ans in user_answers:
+        print(f"Q: {ans['question']}")
+        print(f"Your Answer: {ans['your_answer']}")
+        print(f"Correct Answer: {ans['correct_answer']}")
+        print()
+
+# Run the quiz
+run_quiz()
